@@ -24951,15 +24951,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
 async function run() {
     try {
         const packageUrl = core.getInput('organization-package-url');
         const gh_token = core.getInput('gh-token');
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Getting the organization package at ${packageUrl}`);
         const response = await fetch(packageUrl, {
             method: 'GET',
@@ -24974,11 +24969,30 @@ async function run() {
         const versions = res.map((version) => {
             return version.name;
         });
-        // Set outputs for other workflow steps to use
+        core.info(`Found ${versions.length} versions`);
+        // order versions by date
+        const sortedVersions = [...res].sort((a, b) => {
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateA > dateB ? 1 : -1;
+        });
+        // get the older version
+        const olderVersion = sortedVersions[0];
+        core.info(`Deleting version ${olderVersion.name} ... `);
+        //remove with github api the older version
+        const deleteResponse = await fetch(`${packageUrl}/${olderVersion.id}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${gh_token}`
+            }
+        });
+        if (!deleteResponse.ok) {
+            throw new Error(`Failed to delete package: ${deleteResponse.statusText}`);
+        }
+        core.info(`Deleted version ${olderVersion.name}`);
         core.setOutput('versions', versions);
     }
     catch (error) {
-        // Fail the workflow run if an error occurs
         if (error instanceof Error)
             core.setFailed(error.message);
     }
