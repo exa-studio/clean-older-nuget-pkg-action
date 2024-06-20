@@ -1,0 +1,14 @@
+name: Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./
+        with:
+          gh-token: ${{secrets.GITHUB_TOKEN}}
+          organization-package-url: 'https://api.github.com/orgs/exa-studio/packages/nuget/utils-library/versions'

@@ -9,15 +9,15 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  organization-package-url:
+    description: 'The URL of the organization package'
     required: true
-    default: '1000'
+    default: ''
 
 # Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  versions:
+    description: 'The version list of the organization package'
 
 runs:
   using: node20
