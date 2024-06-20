@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import { PackageVersion } from './package_version'
 
 /**
  * The main function for the action.
@@ -11,17 +12,21 @@ export async function run(): Promise<void> {
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Getting the organization package at ${packageUrl}`)
-    let response = await fetch(packageUrl, {
+    const response = await fetch(packageUrl, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${gh_token}`
       }
-    }).then(response => {
-      return response.json()
     })
 
-    let versions: string[] = response.data.map((pkg: any) => pkg.name)
-    core.debug(`Found versions: ${versions}`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch package: ${response.statusText}`)
+    }
+    const res: PackageVersion[] = await response.json()
+
+    const versions: string[] = res.map((version: PackageVersion) => {
+      return version.name
+    })
 
     // Set outputs for other workflow steps to use
     core.setOutput('versions', versions)
