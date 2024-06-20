@@ -13,6 +13,10 @@ inputs:
     description: 'The URL of the organization package'
     required: true
     default: ''
+  gh-token:
+    description: 'The GitHub token to access the organization package'
+    required: true
+    default: ''
 
 # Define your outputs here.
 outputs:
