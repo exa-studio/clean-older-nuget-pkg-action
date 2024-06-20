@@ -7,7 +7,7 @@ import * as core from '@actions/core'
 export async function run(): Promise<void> {
   try {
     const packageUrl: string = core.getInput('organization-package-url')
-    const gh_token: string = core.getInput('github-token')
+    const gh_token: string = core.getInput('gh-token')
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Getting the organization package at ${packageUrl}`)
