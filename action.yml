@@ -1,6 +1,7 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Clean Older NuGet Package'
+description:
+  'Clean older NuGet package from the organization package repository'
+author: 'Kevin Palencia'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
