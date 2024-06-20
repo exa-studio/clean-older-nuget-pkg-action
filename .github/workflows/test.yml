@@ -10,5 +10,5 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./
         with:
-          gh-token: ${{secrets.GITHUB_TOKEN}}
+          gh-token: ${{secrets.TOKEN_GITHUB}}
           organization-package-url: 'https://api.github.com/orgs/exa-studio/packages/nuget/utils-library/versions'
