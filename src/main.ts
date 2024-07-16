@@ -70,6 +70,8 @@ export async function run(): Promise<void> {
       lastCommitType = 'patch'
     } else if (lastCommit.includes('feat')) {
       lastCommitType = 'minor'
+    } else {
+      lastCommitType = 'noType'
     }
 
     core.info(`Last commit type: ${lastCommitType}`)
@@ -85,7 +87,8 @@ export async function run(): Promise<void> {
         addPatchVersion()
         break
       default:
-        throw new Error('Invalid commit message')
+        core.info('No version to add')
+        break
     }
   } catch (error) {
     core.setFailed((error as Error).message)
