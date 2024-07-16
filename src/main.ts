@@ -64,6 +64,7 @@ export async function run(): Promise<void> {
     core.info(`Last commit: ${lastCommit}`)
 
     const lastCommitContent = lastCommit.split(':')[0]
+    core.info(`Last commit content: ${lastCommitContent}`)
     let lastCommitType
 
     if (lastCommitContent.includes('!')) {
