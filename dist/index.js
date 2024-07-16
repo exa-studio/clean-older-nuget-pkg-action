@@ -31246,12 +31246,11 @@ async function run() {
         core.info(`Reading .csproj file at ${csprojPath}`);
         const csprojContent = fs.readFileSync(csprojPath, 'utf8');
         const versionMatch = csprojContent.match(/<Version>(.*?)<\/Version>/);
-        core.info(`Version: ${versionMatch}`);
-        core.info(`Reading .csproj file at ${csprojPath}`);
         if (!versionMatch) {
             throw new Error('Version not found in .csproj file');
         }
         const currentVersion = versionMatch[1];
+        core.info(`Current version: ${currentVersion}`);
         // get the last commit
         const lastCommit = await (await (0, simple_git_1.default)().log(['-1'])).latest?.message;
         if (lastCommit === undefined) {
@@ -31273,35 +31272,52 @@ async function run() {
         else {
             lastCommitType = 'noType';
         }
+        if (lastCommitType === 'noType') {
+            core.info('No version to add');
+            return;
+        }
         core.info(`Last commit type: ${lastCommitType}`);
+        let newVersion = '';
         switch (lastCommitType) {
             case 'major':
-                addMajorVersion();
+                newVersion = addMajorVersion(currentVersion);
                 break;
             case 'minor':
-                addMinorVersion();
+                newVersion = addMinorVersion(currentVersion);
                 break;
             case 'patch':
-                addPatchVersion();
+                newVersion = addPatchVersion(currentVersion);
                 break;
             default:
                 core.info('No version to add');
-                break;
         }
+        const updatedCsprojContent = csprojContent.replace(/<Version>(.*?)<\/Version>/, `<Version>${newVersion}</Version>`);
+        fs.writeFileSync(csprojPath, updatedCsprojContent);
+        await (0, simple_git_1.default)().add(csprojPath);
+        await (0, simple_git_1.default)().commit(`chore: bump version to ${newVersion}`);
+        await (0, simple_git_1.default)().push();
+        await removeOlderVersion(packageUrl, gh_token);
+        core.info('Process completed');
     }
     catch (error) {
         core.setFailed(error.message);
     }
 }
 exports.run = run;
-const addMajorVersion = () => {
-    core.info('Adding main version');
+const addMajorVersion = (currentVersion) => {
+    let newVersion = currentVersion.replace(/(\d+)\.(\d+)\.(\d+)/, (match, major, minor, patch) => `${parseInt(major) + 1}.0.0`);
+    core.info('Adding main version ' + newVersion);
+    return newVersion;
 };
-const addMinorVersion = () => {
-    core.info('Adding mid version');
+const addMinorVersion = (currentVersion) => {
+    let newVersion = currentVersion.replace(/(\d+)\.(\d+)\.(\d+)/, (match, major, minor, patch) => `${major}.${parseInt(minor) + 1}.0`);
+    core.info('Adding main version ' + newVersion);
+    return newVersion;
 };
-const addPatchVersion = () => {
-    core.info('Adding patch version');
+const addPatchVersion = (currentVersion) => {
+    let newVersion = currentVersion.replace(/(\d+)\.(\d+)\.(\d+)/, (match, major, minor, patch) => `${major}.${minor}.${parseInt(patch) + 1}`);
+    core.info('Adding main version ' + newVersion);
+    return newVersion;
 };
 const removeOlderVersion = async (packageUrl, gh_token) => {
     core.debug(`Getting the organization package at ${packageUrl}`);

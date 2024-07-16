@@ -14,13 +14,12 @@ export async function run(): Promise<void> {
     core.info(`Reading .csproj file at ${csprojPath}`)
     const csprojContent = fs.readFileSync(csprojPath, 'utf8')
     const versionMatch = csprojContent.match(/<Version>(.*?)<\/Version>/)
-    core.info(`Version: ${versionMatch}`)
-    core.info(`Reading .csproj file at ${csprojPath}`)
     if (!versionMatch) {
       throw new Error('Version not found in .csproj file')
     }
 
     const currentVersion = versionMatch[1]
+    core.info(`Current version: ${currentVersion}`)
 
     // get the last commit
     const lastCommit: string | undefined = await (
@@ -46,37 +45,74 @@ export async function run(): Promise<void> {
       lastCommitType = 'noType'
     }
 
+    if (lastCommitType === 'noType') {
+      core.info('No version to add')
+      return
+    }
+
     core.info(`Last commit type: ${lastCommitType}`)
 
+    let newVersion: string = ''
     switch (lastCommitType) {
       case 'major':
-        addMajorVersion()
+        newVersion = addMajorVersion(currentVersion)
         break
+
       case 'minor':
-        addMinorVersion()
+        newVersion = addMinorVersion(currentVersion)
         break
+
       case 'patch':
-        addPatchVersion()
+        newVersion = addPatchVersion(currentVersion)
         break
+
       default:
         core.info('No version to add')
-        break
     }
+
+    const updatedCsprojContent = csprojContent.replace(
+      /<Version>(.*?)<\/Version>/,
+      `<Version>${newVersion}</Version>`
+    )
+
+    fs.writeFileSync(csprojPath, updatedCsprojContent)
+
+    await git().add(csprojPath)
+    await git().commit(`chore: bump version to ${newVersion}`)
+    await git().push()
+
+    await removeOlderVersion(packageUrl, gh_token)
+    core.info('Process completed')
   } catch (error) {
     core.setFailed((error as Error).message)
   }
 }
 
-const addMajorVersion = () => {
-  core.info('Adding main version')
+const addMajorVersion = (currentVersion: string) => {
+  let newVersion = currentVersion.replace(
+    /(\d+)\.(\d+)\.(\d+)/,
+    (match, major, minor, patch) => `${parseInt(major) + 1}.0.0`
+  )
+  core.info('Adding main version ' + newVersion)
+  return newVersion
 }
 
-const addMinorVersion = () => {
-  core.info('Adding mid version')
+const addMinorVersion = (currentVersion: string) => {
+  let newVersion = currentVersion.replace(
+    /(\d+)\.(\d+)\.(\d+)/,
+    (match, major, minor, patch) => `${major}.${parseInt(minor) + 1}.0`
+  )
+  core.info('Adding main version ' + newVersion)
+  return newVersion
 }
 
-const addPatchVersion = () => {
-  core.info('Adding patch version')
+const addPatchVersion = (currentVersion: string) => {
+  let newVersion = currentVersion.replace(
+    /(\d+)\.(\d+)\.(\d+)/,
+    (match, major, minor, patch) => `${major}.${minor}.${parseInt(patch) + 1}`
+  )
+  core.info('Adding main version ' + newVersion)
+  return newVersion
 }
 
 const removeOlderVersion = async (packageUrl: string, gh_token: string) => {
