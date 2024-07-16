@@ -31275,14 +31275,27 @@ async function run() {
         // }
         // core.info(`Deleted version ${olderVersion.name}`)
         // core.setOutput('versions', versions)
-        const projectPath = './';
         const lastCommit = await (await (0, simple_git_1.default)().log(['-1'])).latest?.message;
         if (lastCommit === undefined) {
             core.error('Failed to get last commit');
             throw new Error('Failed to get last commit');
         }
         core.info(`Last commit: ${lastCommit}`);
-        switch (lastCommit) {
+        let lastCommitType;
+        if (lastCommit.includes('breaking change') || lastCommit.includes('!')) {
+            lastCommitType = 'major';
+        }
+        else if (lastCommit.includes('fix')) {
+            lastCommitType = 'patch';
+        }
+        else if (lastCommit.includes('feat')) {
+            lastCommitType = 'minor';
+        }
+        else {
+            lastCommitType = 'noType';
+        }
+        core.info(`Last commit type: ${lastCommitType}`);
+        switch (lastCommitType) {
             case 'major':
                 addMajorVersion();
                 break;
@@ -31293,8 +31306,8 @@ async function run() {
                 addPatchVersion();
                 break;
             default:
-                core.error('Invalid commit message');
-                throw new Error('Invalid commit message');
+                core.info('No version to add');
+                break;
         }
     }
     catch (error) {
