@@ -62,20 +62,17 @@ export async function run(): Promise<void> {
     }
     core.info(`Last commit: ${lastCommit}`)
 
-    const lastCommitContent = lastCommit.split(':')[0]
-    core.info(`Last commit content: ${lastCommitContent}`)
     let lastCommitType
 
-    if (
-      lastCommitContent.includes('breaking change') ||
-      lastCommitContent.includes('!')
-    ) {
+    if (lastCommit.includes('breaking change') || lastCommit.includes('!')) {
       lastCommitType = 'major'
-    } else if (lastCommitContent.includes('fix')) {
+    } else if (lastCommit.includes('fix')) {
       lastCommitType = 'patch'
-    } else if (lastCommitContent.includes('feat')) {
+    } else if (lastCommit.includes('feat')) {
       lastCommitType = 'minor'
     }
+
+    core.info(`Last commit type: ${lastCommitType}`)
 
     switch (lastCommitType) {
       case 'major':
