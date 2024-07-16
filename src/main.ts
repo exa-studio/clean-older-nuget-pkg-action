@@ -66,11 +66,11 @@ export async function run(): Promise<void> {
     const lastCommitContent = lastCommit.split(':')[0]
     let lastCommitType
 
-    if (lastCommitContent.includes('!:')) {
+    if (lastCommitContent.includes('!')) {
       lastCommitType = 'major'
-    } else if (lastCommitContent.includes('fix:')) {
+    } else if (lastCommitContent.includes('fix')) {
       lastCommitType = 'patch'
-    } else if (lastCommitContent.includes('feat:')) {
+    } else if (lastCommitContent.includes('feat')) {
       lastCommitType = 'minor'
     }
 
