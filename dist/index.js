@@ -31242,10 +31242,12 @@ async function run() {
         const packageUrl = core.getInput('organization-package-url');
         const gh_token = core.getInput('gh-token');
         // get current version
-        const csprojPath = path.join(process.cwd());
+        const csprojPath = path.join(process.cwd(), '/utils-library.csproj');
         core.info(`Reading .csproj file at ${csprojPath}`);
         const csprojContent = fs.readFileSync(csprojPath, 'utf8');
         const versionMatch = csprojContent.match(/<Version>(.*?)<\/Version>/);
+        core.info(`Version: ${versionMatch}`);
+        core.info(`Reading .csproj file at ${csprojPath}`);
         if (!versionMatch) {
             throw new Error('Version not found in .csproj file');
         }

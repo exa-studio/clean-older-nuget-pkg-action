@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import { PackageVersion } from './package_version'
-import git, { DefaultLogFields, LogResult } from 'simple-git'
+import git from 'simple-git'
 const path = require('path')
 const fs = require('fs')
 
@@ -10,10 +10,12 @@ export async function run(): Promise<void> {
     const gh_token: string = core.getInput('gh-token')
 
     // get current version
-    const csprojPath = path.join(process.cwd())
+    const csprojPath = path.join(process.cwd(), '/utils-library.csproj')
     core.info(`Reading .csproj file at ${csprojPath}`)
     const csprojContent = fs.readFileSync(csprojPath, 'utf8')
     const versionMatch = csprojContent.match(/<Version>(.*?)<\/Version>/)
+    core.info(`Version: ${versionMatch}`)
+    core.info(`Reading .csproj file at ${csprojPath}`)
     if (!versionMatch) {
       throw new Error('Version not found in .csproj file')
     }
