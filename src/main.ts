@@ -63,7 +63,18 @@ export async function run(): Promise<void> {
     }
     core.info(`Last commit: ${lastCommit}`)
 
-    switch (lastCommit) {
+    const lastCommitContent = lastCommit.split(':')[0]
+    let lastCommitType
+
+    if (lastCommitContent.includes('!:')) {
+      lastCommitType = 'major'
+    } else if (lastCommitContent.includes('fix:')) {
+      lastCommitType = 'patch'
+    } else if (lastCommitContent.includes('feat:')) {
+      lastCommitType = 'minor'
+    }
+
+    switch (lastCommitType) {
       case 'major':
         addMajorVersion()
         break
@@ -74,7 +85,6 @@ export async function run(): Promise<void> {
         addPatchVersion()
         break
       default:
-        core.error('Invalid commit message')
         throw new Error('Invalid commit message')
     }
   } catch (error) {
