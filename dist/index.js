@@ -31235,46 +31235,22 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const simple_git_1 = __importDefault(__nccwpck_require__(9103));
+const path = __nccwpck_require__(1017);
+const fs = __nccwpck_require__(7147);
 async function run() {
     try {
         const packageUrl = core.getInput('organization-package-url');
         const gh_token = core.getInput('gh-token');
-        // core.debug(`Getting the organization package at ${packageUrl}`)
-        // const response = await fetch(packageUrl, {
-        //   method: 'GET',
-        //   headers: {
-        //     Authorization: `Bearer ${gh_token}`
-        //   }
-        // })
-        // if (!response.ok) {
-        //   throw new Error(`Failed to fetch package: ${response.statusText}`)
-        // }
-        // const res: PackageVersion[] = await response.json()
-        // const versions: string[] = res.map((version: PackageVersion) => {
-        //   return version.name
-        // })
-        // core.info(`Found ${versions.length} versions`)
-        // // order versions by date
-        // const sortedVersions: PackageVersion[] = [...res].sort((a, b) => {
-        //   const dateA = new Date(a.created_at)
-        //   const dateB = new Date(b.created_at)
-        //   return dateA > dateB ? 1 : -1
-        // })
-        // // get the older version
-        // const olderVersion = sortedVersions[0]
-        // core.info(`Deleting version ${olderVersion.name} ... `)
-        // //remove with github api the older version
-        // const deleteResponse = await fetch(`${packageUrl}/${olderVersion.id}`, {
-        //   method: 'DELETE',
-        //   headers: {
-        //     Authorization: `Bearer ${gh_token}`
-        //   }
-        // })
-        // if (!deleteResponse.ok) {
-        //   throw new Error(`Failed to delete package: ${deleteResponse.statusText}`)
-        // }
-        // core.info(`Deleted version ${olderVersion.name}`)
-        // core.setOutput('versions', versions)
+        // get current version
+        const csprojPath = path.join(process.cwd());
+        core.info(`Reading .csproj file at ${csprojPath}`);
+        const csprojContent = fs.readFileSync(csprojPath, 'utf8');
+        const versionMatch = csprojContent.match(/<Version>(.*?)<\/Version>/);
+        if (!versionMatch) {
+            throw new Error('Version not found in .csproj file');
+        }
+        const currentVersion = versionMatch[1];
+        // get the last commit
         const lastCommit = await (await (0, simple_git_1.default)().log(['-1'])).latest?.message;
         if (lastCommit === undefined) {
             core.error('Failed to get last commit');
@@ -31282,6 +31258,7 @@ async function run() {
         }
         core.info(`Last commit: ${lastCommit}`);
         let lastCommitType;
+        //add version based on commit message
         if (lastCommit.includes('breaking change') || lastCommit.includes('!')) {
             lastCommitType = 'major';
         }
@@ -31323,6 +31300,44 @@ const addMinorVersion = () => {
 };
 const addPatchVersion = () => {
     core.info('Adding patch version');
+};
+const removeOlderVersion = async (packageUrl, gh_token) => {
+    core.debug(`Getting the organization package at ${packageUrl}`);
+    const response = await fetch(packageUrl, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${gh_token}`
+        }
+    });
+    if (!response.ok) {
+        throw new Error(`Failed to fetch package: ${response.statusText}`);
+    }
+    const res = await response.json();
+    const versions = res.map((version) => {
+        return version.name;
+    });
+    core.info(`Found ${versions.length} versions`);
+    // order versions by date
+    const sortedVersions = [...res].sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateA > dateB ? 1 : -1;
+    });
+    // get the older version
+    const olderVersion = sortedVersions[0];
+    core.info(`Deleting version ${olderVersion.name} ... `);
+    //remove with github api the older version
+    const deleteResponse = await fetch(`${packageUrl}/${olderVersion.id}`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${gh_token}`
+        }
+    });
+    if (!deleteResponse.ok) {
+        throw new Error(`Failed to delete package: ${deleteResponse.statusText}`);
+    }
+    core.info(`Deleted version ${olderVersion.name}`);
+    core.setOutput('versions', versions);
 };
 
 
