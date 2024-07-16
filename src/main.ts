@@ -52,7 +52,6 @@ export async function run(): Promise<void> {
     // core.info(`Deleted version ${olderVersion.name}`)
     // core.setOutput('versions', versions)
 
-    const projectPath = './'
     const lastCommit: string | undefined = await (
       await git().log(['-1'])
     ).latest?.message
@@ -67,7 +66,10 @@ export async function run(): Promise<void> {
     core.info(`Last commit content: ${lastCommitContent}`)
     let lastCommitType
 
-    if (lastCommitContent.includes('!')) {
+    if (
+      lastCommitContent.includes('breaking change') ||
+      lastCommitContent.includes('!')
+    ) {
       lastCommitType = 'major'
     } else if (lastCommitContent.includes('fix')) {
       lastCommitType = 'patch'
